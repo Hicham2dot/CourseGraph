@@ -19,7 +19,11 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "coursegraph"
 
-    # Ollama / LLM
+    # Groq API (LLM cloud)
+    groq_api_key: str = ""
+    groq_model: str = "mixtral-8x7b-32768"
+
+    # Ollama / LLM (fallback local)
     ollama_url: str = "http://localhost:11434"
     llm_model: str = "mistral:7b-instruct"
     embed_model: str = "BAAI/bge-m3"

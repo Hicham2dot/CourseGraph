@@ -8,7 +8,8 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:6333/healthz || exit 1"]
+      # l'image qdrant n'embarque ni curl ni wget : on teste juste l'ouverture du port via bash
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/6333' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +23,8 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      # l'image ollama n'embarque pas curl : on utilise son propre CLI pour vérifier le serveur
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

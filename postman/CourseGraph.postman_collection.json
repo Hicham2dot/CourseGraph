@@ -1,0 +1,221 @@
+{
+  "info": {
+    "name": "CourseGraph API",
+    "description": "Collection de test pour l'API CourseGraph (RAG révision). Endpoints marqués [STUB] renvoient actuellement `None` (corps de fonction `pass`) et échoueront tant qu'ils ne sont pas implémentés.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" }
+  ],
+  "item": [
+    {
+      "name": "Meta",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok', () => pm.response.json().status === 'ok');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Root (liens doc)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ingestion",
+      "item": [
+        {
+          "name": "Ingest PDF [STUB - retourne None]",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ingest/",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "doc_type", "value": "cours", "type": "text", "description": "cours | annale | correction" },
+                { "key": "course_name", "value": "{{course_name}}", "type": "text" },
+                { "key": "year", "value": "", "type": "text" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ask (RAG)",
+      "item": [
+        {
+          "name": "Ask - question standard",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ask/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Qu'est-ce qu'une matrice diagonalisable ?\",\n  \"course_name\": \"{{course_name}}\",\n  \"session_id\": \"{{session_id}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('a un champ answer', () => typeof json.answer === 'string');",
+                  "pm.test('a un champ sources (liste)', () => Array.isArray(json.sources));",
+                  "pm.test('sources ont doc_type/chapter/page', () => {",
+                  "  if (json.sources.length === 0) return true;",
+                  "  const s = json.sources[0];",
+                  "  return 'doc_type' in s && 'chapter' in s && 'page' in s;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask - question hors corpus (attend abstention)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ask/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Quelle est la recette de la tarte tatin ?\",\n  \"course_name\": \"{{course_name}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('abstained=true si pas de contexte pertinent', () => {",
+                  "  return json.abstained === true || json.sources.length > 0;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ask - stream SSE",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ask/stream",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "text/event-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Résume le chapitre 1.\",\n  \"course_name\": \"{{course_name}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('content-type SSE', () => (pm.response.headers.get('Content-Type') || '').includes('text/event-stream'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quiz",
+      "item": [
+        {
+          "name": "Generate quiz [STUB - retourne None]",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/quiz/generate?course_name={{course_name}}&n_questions=5"
+          }
+        },
+        {
+          "name": "Submit quiz [STUB - retourne None]",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/quiz/submit?session_id={{session_id}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"q1\": \"a\",\n  \"q2\": \"c\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gaps",
+      "item": [
+        {
+          "name": "Get gaps [STUB - retourne None]",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/gaps/{{course_name}}?session_id={{session_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recurrence",
+      "item": [
+        {
+          "name": "Get recurrence [STUB - retourne None]",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recurrence/{{course_name}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Export",
+      "item": [
+        {
+          "name": "Export Anki [STUB - retourne None]",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/export/anki/{{course_name}}?session_id={{session_id}}"
+          }
+        }
+      ]
+    }
+  ]
+}

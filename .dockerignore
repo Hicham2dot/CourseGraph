@@ -1,0 +1,17 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.env
+data/
+!data/sample_corpus/.gitkeep
+postman/
+docs/
+app/
+eval/
+tests/
+README.md

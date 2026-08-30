@@ -30,7 +30,7 @@ class Chunk:
 # ---------------------------------------------------------------------------
 
 
-def _doc_id(document: ParsedDocument) -> str:
+def compute_doc_id(document: ParsedDocument) -> str:
     """ID stable basé sur le cours, le type et le chemin du fichier."""
     raw = f"{document.course_name}:{document.doc_type}:{document.path}"
     return hashlib.md5(raw.encode()).hexdigest()[:16]
@@ -118,7 +118,7 @@ def chunk_document(
 ) -> list[Chunk]:
     """Découpe un document parsé en chunks avec overlap, assignés à leur chapitre."""
     chapter_map = detect_chapters(document)
-    doc_id = _doc_id(document)
+    doc_id = compute_doc_id(document)
     chunks: list[Chunk] = []
 
     for page in document.pages:
